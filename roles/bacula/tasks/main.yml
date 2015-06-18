@@ -1,0 +1,78 @@
+---
+    - name: Install Packages
+      yum: name={{ item }} state=latest
+      with_items:
+        - bacula-director
+        - bacula-client
+        - bacula-storage
+        - bacula-console
+        - mysql-server
+        - MySQL-python
+
+    - name: Start and Enable mysql
+      service: name=mysqld state=started enabled=yes
+
+    - name: Create Database for bacula
+      mysql_db: name={{ dbname }} state=present
+
+    - name: Create user for bacula
+      mysql_user: name={{ dbuser }} password={{ dbpassword }} priv="bacula.*:ALL" host=localhost state=present
+
+    - name: Director Default Storage Address Change
+      command: sed -i -e "s/storage.example.com/{{ ipaddress }}/g" /etc/bacula/{{ item }}.conf
+      with_items:
+        - bacula-dir
+
+    - name: Director Default Client Address Change
+      command: sed -i -e "s/client.example.com/{{ ipaddress }}/g" /etc/bacula/{{ item }}.conf
+      with_items:
+        - bacula-dir
+
+#    - name: Director Default Password Change
+#      command: sed -i -e "s/dbpassword = \"\"/dbpassword = \"dbpass\"/g" /etc/bacula/{{ item }}.conf
+#      with_items:
+#        - bacula-dir
+
+    - name: Director Default Password Change
+      command: sed -i -e "s/@@DIR_PASSWORD@@/bacula/g" /etc/bacula/{{ item }}.conf
+      with_items:
+        - bacula-dir
+        - bacula-sd
+        - bacula-fd
+        - bconsole
+
+    - name: SD Default Password Change
+      command: sed -i -e "s/@@SD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
+      with_items:
+        - dir
+        - sd
+        - fd
+
+    - name: FD Default Password Change
+      command: sed -i -e "s/@@FD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
+      with_items:
+        - dir
+        - sd
+        - fd
+
+
+    - name: MON DIR Default Password Change
+      command: sed -i -e "s/@@MON_DIR_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
+      with_items:
+        - dir
+        - sd
+        - fd
+
+    - name: MON SD Default Password Change
+      command: sed -i -e "s/@@MON_SD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
+      with_items:
+        - dir
+        - sd
+        - fd
+
+    - name: MON FD Default Password Change
+      command: sed -i -e "s/@@MON_FD_PASSWORD@@/bacula/g" /etc/bacula/bacula-{{ item }}.conf
+      with_items:
+        - dir
+        - sd
+        - fd
